@@ -7,6 +7,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>股價 csv 讀取</title>
     <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+            font-family: '微軟正黑體';
+        }
         body, html {
             margin: 0;
             padding: 0;
@@ -14,15 +19,26 @@
             width: 100%;
         }
         #uploadSection {
+            height: 100vh;
+            width: 100%;
+            position: absolute;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #uploadSection>.btnBox {
+            margin-top: 1rem;
             display: flex;
             gap: 20px;
             justify-content: center;
             align-items: center;
-            height: 100vh;
             text-align: center;
-            position: absolute;
             z-index: 1;
-            width: 100%;
+        }
+        #uploadSection>img {
+            width: clamp(300px, 90%, 800px);
         }
         #chartsContainer {
             width: 100%;
@@ -41,42 +57,47 @@
         }
 
         label[for="csvFile"] {
-            width: 200px;
-            height: 60px;
+            width: 150px;
+            height: 50px;
             border-radius: 5px;
-            background-color: rgb(0, 104, 139);
-            color: #fff;
+            border: 1px solid rgb(0, 104, 139);
+            background-color: #fff;
+            color: rgb(0, 104, 139);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             user-select: none;
             font-size: 1rem;
-            font-family: '微軟正黑體';
         }
-        label[for="csvFile"]:hover { background-color: rgb(0, 138, 176); }
-        label[for="csvFile"]:active { background-color: rgb(0, 50, 91); }
+        label[for="csvFile"]:hover { background-color: #407bff; color: #fff; }
+        label[for="csvFile"]:active { background-color: #2b5fce; color: #fff; }
 
         #loadDefaultBtn {
-            width: 200px;
-            height: 60px;
+            width: 150px;
+            height: 50px;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
-            background-color: rgb(2, 139, 0);
+            background-color: #407bff;
             color: #fff;
             cursor: pointer;
             font-size: 1rem;
-            font-family: '微軟正黑體';
         }
+        #loadDefaultBtn:hover { background-color: #588dff; }
+        #loadDefaultBtn:active { background-color: #2b5fce; }
     </style>
 </head>
 <body>
     <!-- 初始提示與選檔案 -->
     <div id="uploadSection">
-        <label for="csvFile">上傳自己的 CSV</label>
-        <input type="file" id="csvFile" accept=".csv" style="display: none;"/>
-        <button id="loadDefaultBtn">載入預設 CSV</button>
+        <h2>請選擇要載入的股價CSV</h2>
+        <img src="./upload.svg" alt="uploadCSV">
+        <div class="btnBox">
+            <button id="loadDefaultBtn">載入預設 CSV</button>
+            <label for="csvFile">上傳自己的 CSV</label>
+            <input type="file" id="csvFile" accept=".csv" style="display: none;"/>
+        </div>
     </div>
 
     <!-- 圖表容器 -->
