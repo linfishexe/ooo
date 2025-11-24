@@ -91,7 +91,7 @@
 <body>
     <!-- 初始提示與選檔案 -->
     <div id="uploadSection">
-        <h2>請選擇要載入的股價CSV</h2>
+        <h2>請選擇要載入的走勢CSV</h2>
         <img src="./upload.svg" alt="uploadCSV">
         <div class="btnBox">
             <button id="loadDefaultBtn">載入預設 CSV</button>
@@ -141,10 +141,26 @@ function completeParse(results) {
 
 function getStockData(results) {
     const rows = results.data;
-    const stockNames = rows[0];
-    const stockDataRows = rows.slice(1).filter(r => r.length > 1);
+
+    let stockNames;
+    let stockDataRows;
+
+    if (rows[0].length === 1) {
+        // 單股 CSV
+        stockNames = [rows[0][0]];
+        stockDataRows = rows.slice(1).filter(r => r.length > 0 && r[0] !== "");
+    } else {
+        // 多股 CSV
+        stockNames = rows[0];
+        stockDataRows = rows.slice(1).filter(r => r.length > 1);
+    }
+
+    console.log("stockNames =", stockNames);
+    console.log("stockDataRows =", stockDataRows);
+
     return { stockNames, stockDataRows };
 }
+
 
 // 建立下拉選單
 function setupStockSelect(stockNames) {
