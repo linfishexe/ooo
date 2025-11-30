@@ -5,92 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles/style.css">
     <title>股價 csv 讀取</title>
-    <style>
-        * {
-            margin: 0;
-            box-sizing: border-box;
-            font-family: '微軟正黑體';
-        }
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-        }
-        #uploadSection {
-            height: 100vh;
-            width: 100%;
-            position: absolute;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        #uploadSection>.btnBox {
-            margin-top: 1rem;
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            z-index: 1;
-        }
-        #uploadSection>img {
-            width: clamp(300px, 90%, 800px);
-        }
-        #chartsContainer {
-            width: 100%;
-            height: 100vh;
-        }
-        #chartsContainer canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
-        #stockSelect {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            padding: 5px;
-        }
-
-        label[for="csvFile"] {
-            width: 150px;
-            height: 50px;
-            border-radius: 5px;
-            border: 1px solid rgb(0, 104, 139);
-            background-color: #fff;
-            color: rgb(0, 104, 139);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
-            font-size: 1rem;
-        }
-        label[for="csvFile"]:hover { background-color: #407bff; color: #fff; }
-        label[for="csvFile"]:active { background-color: #2b5fce; color: #fff; }
-
-        #loadDefaultBtn {
-            width: 150px;
-            height: 50px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            background-color: #407bff;
-            color: #fff;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        #loadDefaultBtn:hover { background-color: #588dff; }
-        #loadDefaultBtn:active { background-color: #2b5fce; }
-    </style>
 </head>
 <body>
     <!-- 初始提示與選檔案 -->
-    <div id="uploadSection">
+    <section id="uploadSection">
         <h2>請選擇要載入的走勢CSV</h2>
         <img src="./upload.svg" alt="uploadCSV">
         <div class="btnBox">
@@ -98,12 +18,25 @@
             <label for="csvFile">上傳自己的 CSV</label>
             <input type="file" id="csvFile" accept=".csv" style="display: none;"/>
         </div>
-    </div>
+    </section>
 
-    <!-- 圖表容器 -->
-    <select id="stockSelect" style="display:none;"></select>
-    <div id="chartsContainer"></div>
-
+    <nav>
+        <button onclick="toggleAside(this)" class="menuBtn" aria-label="Toggle Aside Menu">
+            <div></div>
+            <div></div>
+            <div></div>
+        </button>
+    </nav>
+    <main>
+        <section>
+            <!-- 圖表容器 -->
+            <select id="stockSelect" style="display:none;"></select>
+            <div id="chartsContainer"></div>
+        </section>
+        <aside>
+            <h2>股票列表</h2>
+        </aside>
+    </main>
 <script>
 let globalStockData = null; // 全域保存資料
 let currentChart = null;    // 保存目前的 Chart 物件
@@ -228,6 +161,13 @@ function renderChart(canvas, stockName, priceList) {
         }
     });
 }
+
+function toggleAside(button) {
+    const aside = document.querySelector("aside");
+    button.classList.toggle("open");
+    aside.classList.toggle("open");
+}
+
 </script>
 </body>
 </html>
