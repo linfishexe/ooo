@@ -28,13 +28,10 @@
         </button>
     </nav>
     <main>
-        <section>
-            <!-- 圖表容器 -->
-            <select id="stockSelect" style="display:none;"></select>
-            <div id="chartsContainer"></div>
-        </section>
+        <section id="chartsContainer"><!-- 圖表容器 --></section>
         <aside>
             <h2>股票列表</h2>
+            <ul class="stock_list"></ul>
         </aside>
     </main>
 <script>
@@ -57,19 +54,18 @@ document.getElementById("loadDefaultBtn").addEventListener("click", function () 
         .catch(err => console.error("載入預設 CSV 失敗:", err));
 });
 
+function toggleAside(button) {
+    const aside = document.querySelector("aside");
+    button.classList.toggle("open");
+    aside.classList.toggle("open");
+}
+
 function completeParse(results) {
     globalStockData = getStockData(results);
     setupStockSelect(globalStockData.stockNames);
 
     // 隱藏上傳提示
     document.getElementById("uploadSection").style.display = "none";
-    // 顯示選單
-    document.getElementById("stockSelect").style.display = "block";
-
-    // 預設顯示第一個
-    if (globalStockData.stockNames.length > 0) {
-        showChartByIndex(0);
-    }
 }
 
 function getStockData(results) {
@@ -88,63 +84,139 @@ function getStockData(results) {
         stockDataRows = rows.slice(1).filter(r => r.length > 1);
     }
 
-    console.log("stockNames =", stockNames);
-    console.log("stockDataRows =", stockDataRows);
-
     return { stockNames, stockDataRows };
 }
 
-
-// 建立下拉選單
+// 建立股票選單
 function setupStockSelect(stockNames) {
-    const select = document.getElementById("stockSelect");
-    select.innerHTML = "";
+    const asideList = document.querySelector("aside .stock_list");
+    asideList.innerHTML = ""; // 清空舊列表
+
     stockNames.forEach((name, idx) => {
-        const option = document.createElement("option");
-        option.value = idx;
-        option.textContent = name;
-        select.appendChild(option);
+        const li = document.createElement("li");
+
+        // icon
+        const divIcon = document.createElement("div");
+        const i = document.createElement("i");
+        divIcon.appendChild(i);
+
+        // info
+        const divInfo = document.createElement("div");
+        const h3 = document.createElement("h3");
+        h3.textContent = name;
+        divInfo.appendChild(h3);
+
+        // 組合 li
+        li.appendChild(divIcon);
+        li.appendChild(divInfo);
+
+        // 綁定 click 事件：切換 active 狀態
+        li.addEventListener("click", function () {
+            this.classList.toggle("active"); // 切換選取狀態
+
+            // 收集所有 active 的 li
+            const activeLis = asideList.querySelectorAll("li.active");
+            const indices = Array.from(activeLis).map(item => {
+                // 取出在 stockNames 中的索引
+                return Array.from(asideList.children).indexOf(item);
+            });
+
+            showChartsByIndices(indices);
+        });
+
+        asideList.appendChild(li);
     });
 
-    // 綁定事件：切換股票
-    select.addEventListener("change", function () {
-        const idx = parseInt(this.value);
-        showChartByIndex(idx);
-    });
+    showChartsByIndices([]);
 }
 
-// 顯示指定股票的圖表
-function showChartByIndex(colIndex) {
+// 繪製 購買勾選股票的後的資金水位
+function showChartsByIndices(indices) {
+    // 從全域資料取出股票名稱與原始 CSV 行列資料
     const { stockNames, stockDataRows } = globalStockData;
-    const stockName = stockNames[colIndex];
-    const priceList = extractPriceList(stockDataRows, colIndex);
+    const canvas = prepareChartCanvas();          // 清空圖表容器並建立新的 canvas 畫布
+    if (currentChart) { currentChart.destroy(); } // 若已有舊圖表，先銷毀以避免重疊
+    const INITIAL_CAPITAL = 10000000;             // 資金 1,000 萬元
+    const stockAmount = indices.length;             // 股票檔數
+    let portfolioValues = []; // 用來記錄每日資金水位的容器
+    let labels = []; // 對應的 X 軸標籤 (Day1, Day2, ...)
 
-    const chartsContainer = document.getElementById("chartsContainer");
-    chartsContainer.innerHTML = ""; // 清空舊圖表
+    // 如果有勾選至少一檔股票
+    if ( stockAmount > 0 ) {
 
-    const canvas = document.createElement("canvas");
-    chartsContainer.appendChild(canvas);
+        // 計算每檔股票的平均分配資金
+        const capital = Math.floor(INITIAL_CAPITAL / stockAmount);
 
-    // 如果已有舊圖表，先銷毀
-    if (currentChart) {
-        currentChart.destroy();
+        // 計算平均分配後的初始剩餘現金（無法整除的差額）
+        let remain = INITIAL_CAPITAL - capital * stockAmount;
+
+        // 根據第一天股價，計算每檔股票可購入的整股數量與更新後剩餘現金
+        const holdings = calculateHoldings(indices, stockDataRows, capital, remain);
+
+        // 取得更新後的剩餘現金（包含每檔分配後買不完的零錢）
+        remain = holdings.remain;
+
+        // 取得持股清單（股票的index 與 股數）
+        const holdingList = holdings.holdingList;
+
+        // 計算每一天的投資組合資金水位（持股市值 + 剩餘現金）
+        portfolioValues = calculatePortfolioValues(stockDataRows, holdingList, remain);
+
+        // 依照資金水位的長度建立對應的 Day 標籤
+        labels = portfolioValues.map((_, i) => "Day " + (i + 1));
+    } 
+    
+    // 若未勾選任何股票
+    else {
+        labels = stockDataRows.map((_, i) => "Day " + (i + 1)); // 直接依照 CSV 行數建立 Day 標籤
+        portfolioValues = [];                                   // 未持有資產，資金水位的內容為空
     }
 
-    currentChart = renderChart(canvas, stockName, priceList);
+    // 使用 Chart.js 依據標籤與資金水位資料繪製折線圖
+    currentChart = drawChart(canvas, labels, portfolioValues);
 }
 
-function extractPriceList(stockDataRows, colIndex) {
-    return stockDataRows.map(r => parseFloat(r[colIndex]));
+// 根據分配資金與第一天股價，計算每檔股票的持股數量與更新後的剩餘現金
+function calculateHoldings(indices, stockDataRows, baseAllocation, remain) {
+    let holdingList = [];
+    let updatedRemain = remain;
+
+    indices.forEach(colIndex => {
+        const firstPrice = parseFloat(stockDataRows[0][colIndex]);
+        const shares = Math.floor(baseAllocation / firstPrice);
+        const usedCash = shares * firstPrice;
+        const remainingCash = baseAllocation - usedCash;
+        updatedRemain += remainingCash;
+
+        const holding = { colIndex, shares };
+        holdingList.push(holding);
+    });
+
+    return { holdingList, remain: updatedRemain };
 }
 
-function renderChart(canvas, stockName, priceList) {
+// 計算每一天投資組合的總資金水位（持股市值 + 剩餘現金），並四捨五入為整數
+function calculatePortfolioValues(stockDataRows, holdingList, remain) {
+    const values = stockDataRows.map(row => {
+        let value = remain;
+        holdingList.forEach(h => {
+            const price = parseFloat(row[h.colIndex]);
+            if (!isNaN(price)) { value += h.shares * price; }
+        });
+        return Math.round(value); // 四捨五入
+    });
+    return values;
+}
+
+// 使用 Chart.js 繪製投資組合資金水位折線圖
+function drawChart(canvas, labels, portfolioValues) {
     return new Chart(canvas.getContext("2d"), {
         type: "line",
         data: {
-            labels: priceList.map((_, i) => "Day " + (i + 1)),
+            labels,
             datasets: [{
-                label: stockName,
-                data: priceList,
+                label: "投資組合資金水位",
+                data: portfolioValues,
                 borderWidth: 2,
                 borderColor: "blue",
                 fill: false,
@@ -153,20 +225,24 @@ function renderChart(canvas, stockName, priceList) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false, // 讓圖表滿版
+            maintainAspectRatio: false,
             scales: {
                 x: { title: { display: true, text: "天數" } },
-                y: { title: { display: true, text: "股價 / 漲跌" } }
+                y: { title: { display: true, text: "資金水位 (元)" } }
             }
         }
     });
 }
 
-function toggleAside(button) {
-    const aside = document.querySelector("aside");
-    button.classList.toggle("open");
-    aside.classList.toggle("open");
+// 建立並清空圖表容器，準備新的 canvas 畫布
+function prepareChartCanvas() {
+    const chartsContainer = document.getElementById("chartsContainer");
+    chartsContainer.innerHTML = "";
+    const canvas = document.createElement("canvas");
+    chartsContainer.appendChild(canvas);
+    return canvas;
 }
+
 
 </script>
 </body>
