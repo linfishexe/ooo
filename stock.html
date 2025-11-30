@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="./scripts/ChartCanvas.js"></script>
+    <script src="./scripts/StockDataProcessor.js"></script>
+    <script src="./scripts/StockListUI.js"></script>
     <link rel="stylesheet" href="styles/style.css">
     <title>股價 csv 讀取</title>
 </head>
@@ -35,8 +38,18 @@
         </aside>
     </main>
 <script>
-let globalStockData = null; // 全域保存資料
-let currentChart = null;    // 保存目前的 Chart 物件
+function toggleAside(button) {
+    const aside = document.querySelector("aside");
+    button.classList.toggle("open");
+    aside.classList.toggle("open");
+}
+</script>
+<script>
+const stockList = document.querySelector("aside .stock_list");
+
+const chartCanvas = new ChartCanvas(chartsContainer);
+const stockDataProcessor = new StockDataProcessor();
+const stockListUI = new StockListUI(stockList, showChartsByIndices);
 
 document.getElementById("csvFile").addEventListener("change", function (event) {
     const file = event.target.files[0];
@@ -48,94 +61,18 @@ document.getElementById("loadDefaultBtn").addEventListener("click", function () 
     const url = "https://linfishexe.github.io/ooo/20210501-20210531.csv";
     fetch(url)
         .then(response => response.text())
-        .then(csvText => {
-            Papa.parse(csvText, { complete: completeParse });
-        })
+        .then(csvText => { Papa.parse(csvText, { complete: completeParse }); })
         .catch(err => console.error("載入預設 CSV 失敗:", err));
 });
 
-function toggleAside(button) {
-    const aside = document.querySelector("aside");
-    button.classList.toggle("open");
-    aside.classList.toggle("open");
-}
-
 function completeParse(results) {
-    globalStockData = getStockData(results);
-    setupStockSelect(globalStockData.stockNames);
-
-    // 隱藏上傳提示
+    stockDataProcessor.parse(results);
+    stockListUI.render(stockDataProcessor.stockNames);
     document.getElementById("uploadSection").style.display = "none";
-}
-
-function getStockData(results) {
-    const rows = results.data;
-
-    let stockNames;
-    let stockDataRows;
-
-    if (rows[0].length === 1) {
-        // 單股 CSV
-        stockNames = [rows[0][0]];
-        stockDataRows = rows.slice(1).filter(r => r.length > 0 && r[0] !== "");
-    } else {
-        // 多股 CSV
-        stockNames = rows[0];
-        stockDataRows = rows.slice(1).filter(r => r.length > 1);
-    }
-
-    return { stockNames, stockDataRows };
-}
-
-// 建立股票選單
-function setupStockSelect(stockNames) {
-    const asideList = document.querySelector("aside .stock_list");
-    asideList.innerHTML = ""; // 清空舊列表
-
-    stockNames.forEach((name, idx) => {
-        const li = document.createElement("li");
-
-        // icon
-        const divIcon = document.createElement("div");
-        const i = document.createElement("i");
-        divIcon.appendChild(i);
-
-        // info
-        const divInfo = document.createElement("div");
-        const h3 = document.createElement("h3");
-        h3.textContent = name;
-        divInfo.appendChild(h3);
-
-        // 組合 li
-        li.appendChild(divIcon);
-        li.appendChild(divInfo);
-
-        // 綁定 click 事件：切換 active 狀態
-        li.addEventListener("click", function () {
-            this.classList.toggle("active"); // 切換選取狀態
-
-            // 收集所有 active 的 li
-            const activeLis = asideList.querySelectorAll("li.active");
-            const indices = Array.from(activeLis).map(item => {
-                // 取出在 stockNames 中的索引
-                return Array.from(asideList.children).indexOf(item);
-            });
-
-            showChartsByIndices(indices);
-        });
-
-        asideList.appendChild(li);
-    });
-
-    showChartsByIndices([]);
 }
 
 // 繪製 購買勾選股票的後的資金水位
 function showChartsByIndices(indices) {
-    // 從全域資料取出股票名稱與原始 CSV 行列資料
-    const { stockNames, stockDataRows } = globalStockData;
-    const canvas = prepareChartCanvas();          // 清空圖表容器並建立新的 canvas 畫布
-    if (currentChart) { currentChart.destroy(); } // 若已有舊圖表，先銷毀以避免重疊
     const INITIAL_CAPITAL = 10000000;             // 資金 1,000 萬元
     const stockAmount = indices.length;             // 股票檔數
     let portfolioValues = []; // 用來記錄每日資金水位的容器
@@ -151,7 +88,7 @@ function showChartsByIndices(indices) {
         let remain = INITIAL_CAPITAL - capital * stockAmount;
 
         // 根據第一天股價，計算每檔股票可購入的整股數量與更新後剩餘現金
-        const holdings = calculateHoldings(indices, stockDataRows, capital, remain);
+        const holdings = stockDataProcessor.calculateHoldings(indices, capital, remain);
 
         // 取得更新後的剩餘現金（包含每檔分配後買不完的零錢）
         remain = holdings.remain;
@@ -160,89 +97,22 @@ function showChartsByIndices(indices) {
         const holdingList = holdings.holdingList;
 
         // 計算每一天的投資組合資金水位（持股市值 + 剩餘現金）
-        portfolioValues = calculatePortfolioValues(stockDataRows, holdingList, remain);
+        portfolioValues = stockDataProcessor.calculatePortfolioValues(holdingList, remain);
 
-        // 依照資金水位的長度建立對應的 Day 標籤
-        labels = portfolioValues.map((_, i) => "Day " + (i + 1));
+        // 依照資金水位的長度建立對應的標籤
+        labels = portfolioValues.map((_, i) => "" + (i + 1));
     } 
     
     // 若未勾選任何股票
     else {
-        labels = stockDataRows.map((_, i) => "Day " + (i + 1)); // 直接依照 CSV 行數建立 Day 標籤
+        const stockDataRows = stockDataProcessor.stockDataRows;
+        labels = stockDataRows.map((_, i) => "" + (i + 1)); // 直接依照 CSV 行數建立 Day 標籤
         portfolioValues = [];                                   // 未持有資產，資金水位的內容為空
     }
 
-    // 使用 Chart.js 依據標籤與資金水位資料繪製折線圖
-    currentChart = drawChart(canvas, labels, portfolioValues);
+    // 依據標籤與資金水位資料繪製折線圖
+    chartCanvas.drawChart(labels, portfolioValues);
 }
-
-// 根據分配資金與第一天股價，計算每檔股票的持股數量與更新後的剩餘現金
-function calculateHoldings(indices, stockDataRows, baseAllocation, remain) {
-    let holdingList = [];
-    let updatedRemain = remain;
-
-    indices.forEach(colIndex => {
-        const firstPrice = parseFloat(stockDataRows[0][colIndex]);
-        const shares = Math.floor(baseAllocation / firstPrice);
-        const usedCash = shares * firstPrice;
-        const remainingCash = baseAllocation - usedCash;
-        updatedRemain += remainingCash;
-
-        const holding = { colIndex, shares };
-        holdingList.push(holding);
-    });
-
-    return { holdingList, remain: updatedRemain };
-}
-
-// 計算每一天投資組合的總資金水位（持股市值 + 剩餘現金），並四捨五入為整數
-function calculatePortfolioValues(stockDataRows, holdingList, remain) {
-    const values = stockDataRows.map(row => {
-        let value = remain;
-        holdingList.forEach(h => {
-            const price = parseFloat(row[h.colIndex]);
-            if (!isNaN(price)) { value += h.shares * price; }
-        });
-        return Math.round(value); // 四捨五入
-    });
-    return values;
-}
-
-// 使用 Chart.js 繪製投資組合資金水位折線圖
-function drawChart(canvas, labels, portfolioValues) {
-    return new Chart(canvas.getContext("2d"), {
-        type: "line",
-        data: {
-            labels,
-            datasets: [{
-                label: "投資組合資金水位",
-                data: portfolioValues,
-                borderWidth: 2,
-                borderColor: "blue",
-                fill: false,
-                tension: 0.2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { title: { display: true, text: "天數" } },
-                y: { title: { display: true, text: "資金水位 (元)" } }
-            }
-        }
-    });
-}
-
-// 建立並清空圖表容器，準備新的 canvas 畫布
-function prepareChartCanvas() {
-    const chartsContainer = document.getElementById("chartsContainer");
-    chartsContainer.innerHTML = "";
-    const canvas = document.createElement("canvas");
-    chartsContainer.appendChild(canvas);
-    return canvas;
-}
-
 
 </script>
 </body>
