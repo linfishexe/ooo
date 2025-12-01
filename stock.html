@@ -131,17 +131,19 @@ function showChartsByIndices(indices) {
         const portfolioValues = stockDataProcessor.calcValues(holdingList, remain);
         labels = portfolioValues.map((_, i) => "" + (i + 1));
 
-        datasets.push({
-            label: "平均分配全部股票",
-            data: portfolioValues,
-            borderColor: "#2b5fce",
-            fill: false
-        });
+        if(indices.length > 1){
+            datasets.push({
+                label: "平均分配全部股票",
+                data: portfolioValues,
+                borderColor: "#2b5fce",
+                fill: false
+            });
 
-        // 建立控制按鈕
-        const switchBoxAll = gen_SwitchButton("平均分配全部股票", "#2b5fce");
-        bindSwitchToDataset(switchBoxAll, "平均分配全部股票");
-        switchBoxContainer.appendChild(switchBoxAll);
+            // 建立控制按鈕
+            const switchBoxAll = gen_SwitchButton("平均分配全部股票", "#2b5fce");
+            bindSwitchToDataset(switchBoxAll, "平均分配全部股票");
+            switchBoxContainer.appendChild(switchBoxAll);
+        }
 
         // ====== 全部資金只買單一股票 ======
         indices.forEach((stockIndex, idx) => {
@@ -159,10 +161,12 @@ function showChartsByIndices(indices) {
                 fill: false
             });
 
+            
             const switchBox = gen_SwitchButton(label, color);
             bindSwitchToDataset(switchBox, label);
             switchBoxContainer.appendChild(switchBox);
         });
+    
     } else {
         const stockDataRows = stockDataProcessor.stockDataRows;
         labels = stockDataRows.map((_, i) => "" + (i + 1));
