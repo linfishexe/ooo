@@ -30,8 +30,24 @@
             <div></div>
         </button>
     </nav>
+
     <main>
-        <section id="chartsContainer"><!-- 圖表容器 --></section>
+        <section>
+            <div id="chartsContainer"></div><!-- 圖表容器 -->
+            <div id="displayControlContainer">
+                <h3>顯示控制</h3>
+                <div class="switchBoxContainer">
+
+                    <div class="switchBox active">
+                        <div class="switchButton">
+                            <div class="switchBall "></div>
+                        </div>
+                        <span>AAPL</span>
+                    </div>
+
+                </div>
+            </div>
+        </section>
         <aside>
             <h2>股票列表</h2>
             <ul class="stock_list"></ul>
@@ -45,7 +61,33 @@ function toggleAside(button) {
 }
 </script>
 <script>
+
+function gen_SwitchButton(stockName, color){
+    const switchBoxDIV = document.createElement("div");
+    const switchButtonDIV = document.createElement("div"); 
+    const switchBallDIV = document.createElement("div"); 
+    const switchBoxSPAN = document.createElement("span");
+
+    switchBoxDIV.classList.add("switchBox");
+    switchBoxDIV.classList.add("active");
+    switchButtonDIV.classList.add("switchButton");
+    switchBallDIV.classList.add("switchBall");
+    switchBoxSPAN.textContent = stockName;
+
+    // 套用顏色
+    if(color){
+        switchBallDIV.style = `--btn-color:${color}`;
+        switchButtonDIV.style = `--btn-color:${color}`;
+    }
+
+    switchButtonDIV.appendChild(switchBallDIV);
+    switchBoxDIV.appendChild(switchButtonDIV);
+    switchBoxDIV.appendChild(switchBoxSPAN);
+    return switchBoxDIV;
+}
+
 const stockList = document.querySelector("aside .stock_list");
+const switchBoxContainer = document.querySelector(".switchBoxContainer");
 
 const chartCanvas = new ChartCanvas(chartsContainer);
 const stockDataProcessor = new StockDataProcessor();
@@ -71,47 +113,80 @@ function completeParse(results) {
     document.getElementById("uploadSection").style.display = "none";
 }
 
-// 繪製 購買勾選股票的後的資金水位
 function showChartsByIndices(indices) {
-    const INITIAL_CAPITAL = 10000000;             // 資金 1,000 萬元
-    const stockAmount = indices.length;             // 股票檔數
-    let portfolioValues = []; // 用來記錄每日資金水位的容器
-    let labels = []; // 對應的 X 軸標籤 (Day1, Day2, ...)
+    const stockNames = stockDataProcessor.stockNames;
+    const INITIAL_CAPITAL = 10000000;
+    let labels = [];
+    let datasets = [];
 
-    // 如果有勾選至少一檔股票
-    if ( stockAmount > 0 ) {
+    switchBoxContainer.replaceChildren();
 
-        // 計算每檔股票的平均分配資金
-        const capital = Math.floor(INITIAL_CAPITAL / stockAmount);
-
-        // 計算平均分配後的初始剩餘現金（無法整除的差額）
-        let remain = INITIAL_CAPITAL - capital * stockAmount;
-
-        // 根據第一天股價，計算每檔股票可購入的整股數量與更新後剩餘現金
-        const holdings = stockDataProcessor.calculateHoldings(indices, capital, remain);
-
-        // 取得更新後的剩餘現金（包含每檔分配後買不完的零錢）
+    if (indices.length > 0) {
+        // ====== 平均分配買全部股票 ======
+        const capital = Math.floor(INITIAL_CAPITAL / indices.length);
+        let remain = INITIAL_CAPITAL - capital * indices.length;
+        const holdings = stockDataProcessor.calcHoldings(indices, capital, remain);
         remain = holdings.remain;
-
-        // 取得持股清單（股票的index 與 股數）
         const holdingList = holdings.holdingList;
-
-        // 計算每一天的投資組合資金水位（持股市值 + 剩餘現金）
-        portfolioValues = stockDataProcessor.calculatePortfolioValues(holdingList, remain);
-
-        // 依照資金水位的長度建立對應的標籤
+        const portfolioValues = stockDataProcessor.calcValues(holdingList, remain);
         labels = portfolioValues.map((_, i) => "" + (i + 1));
-    } 
-    
-    // 若未勾選任何股票
-    else {
+
+        datasets.push({
+            label: "平均分配全部股票",
+            data: portfolioValues,
+            borderColor: "#2b5fce",
+            fill: false
+        });
+
+        // 建立控制按鈕
+        const switchBoxAll = gen_SwitchButton("平均分配全部股票", "#2b5fce");
+        bindSwitchToDataset(switchBoxAll, "平均分配全部股票");
+        switchBoxContainer.appendChild(switchBoxAll);
+
+        // ====== 全部資金只買單一股票 ======
+        indices.forEach((stockIndex, idx) => {
+            const holdingsSingle = stockDataProcessor.calcHoldings([stockIndex], INITIAL_CAPITAL, 0);
+            const remainSingle = holdingsSingle.remain;
+            const holdingListSingle = holdingsSingle.holdingList;
+            const valuesSingle = stockDataProcessor.calcValues(holdingListSingle, remainSingle);
+
+            const label = stockDataProcessor.stockNames[stockIndex];
+            const color = getColor(idx);
+            datasets.push({
+                label: label,
+                data: valuesSingle,
+                borderColor: color,
+                fill: false
+            });
+
+            const switchBox = gen_SwitchButton(label, color);
+            bindSwitchToDataset(switchBox, label);
+            switchBoxContainer.appendChild(switchBox);
+        });
+    } else {
         const stockDataRows = stockDataProcessor.stockDataRows;
-        labels = stockDataRows.map((_, i) => "" + (i + 1)); // 直接依照 CSV 行數建立 Day 標籤
-        portfolioValues = [];                                   // 未持有資產，資金水位的內容為空
+        labels = stockDataRows.map((_, i) => "" + (i + 1));
     }
 
-    // 依據標籤與資金水位資料繪製折線圖
-    chartCanvas.drawChart(labels, portfolioValues);
+    chartCanvas.drawChart(labels, datasets);
+}
+
+function bindSwitchToDataset(switchBox, datasetLabel) {
+    switchBox.addEventListener("click", () => {
+        const chart = chartCanvas.chart;
+        const datasetIndex = chart.data.datasets.findIndex(ds => ds.label === datasetLabel);
+        if (datasetIndex !== -1) {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            meta.hidden = !meta.hidden; // 切換顯示/隱藏
+            chart.update();
+        }
+        switchBox.classList.toggle("active");
+    });
+}
+
+function getColor(i) {
+    const colors = ["#a99391", "#bc9683","#c49d62", "#8ea98e", "#787e82", "#6a5f7d", "#71494a"];
+    return colors[i % colors.length];
 }
 
 </script>

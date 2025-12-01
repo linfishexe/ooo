@@ -50,7 +50,7 @@ class StockDataProcessor {
      * @param {number} remain 
      * @returns {{holdingList: {colIndex: number, shares: number}[], remain: number}}
      */
-    calculateHoldings(indices, capital, remain) {
+    calcHoldings(indices, capital, remain) {
         /** @type{{colIndex: number, shares: number}[]} */
         const holdingList = [];
         let updatedRemain = remain;
@@ -74,7 +74,7 @@ class StockDataProcessor {
      * @param {number} remain 
      * @returns {number[]}
      */
-    calculatePortfolioValues(holdingList, remain) { 
+    calcValues(holdingList, remain) { 
         const values = this.stockDataRows.map(row => {
             let value = remain;
             holdingList.forEach(h => {

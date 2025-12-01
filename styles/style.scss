@@ -3,6 +3,12 @@
 :root {
     --nav-height: 0;
     --aside-width: 270px;
+    color: #2b5fce;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
 }
 
 #uploadSection {
@@ -94,14 +100,65 @@ nav {
 }
 
 main {
-    height: 100vh;
-    max-height: calc( 100vh - var(--nav-height) );
+    height: 100%;
+    max-height: calc( 100% - var(--nav-height) );
     width: 100%;
     display: flex;
-    #chartsContainer {
-        height: 100%;
+    section {
         width: 100%;
-        canvas { width: 100% !important; height: 100% !important; }
+        height: 100%;
+        #chartsContainer {
+            padding: 1rem;
+            height: 75%;
+            width: 100%;
+            canvas { width: 100% !important; height: 100% !important; }
+        }
+        #displayControlContainer{
+            h3{
+                margin-bottom: 20px;
+            }
+            padding: 1rem;
+            .switchBoxContainer{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 20px;
+                align-items: center;
+                .switchBox{
+                    display: flex;
+                    cursor: pointer;
+                    align-items: center;
+                    .switchButton{
+                        width: 60px;
+                        height: 30px;
+                        border: 1px solid #999;
+                        background-color: #fff;
+                        border-radius: 50px;
+                        transition: all .3s;
+                        overflow: hidden;
+
+                        .switchBall{
+                            width: 28px;
+                            height: 28px;
+                            border: 0;
+                            background-color: var(--btn-color);
+                            border-radius: 50px;
+                            transition: left .3s ease-in-out;
+                            left: 0;
+                            border: 3px solid #fff;
+                        }
+                    }
+                    &.active .switchBall{
+                        left: 30px;
+                    }
+                    &.active .switchButton{
+                        background-color: var(--btn-color);
+                    }
+                    span{
+                        padding-left: 15px;   
+                    }
+                }
+            }
+        }
     }
 
     aside {
