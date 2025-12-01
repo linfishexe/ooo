@@ -43,9 +43,11 @@ class ChartCanvas {
                 maintainAspectRatio: false,
                 animation: false,
                 scales: {
-                    x: { title: { display: true, text: "天數" } },
+                    x: { 
+                        // title: { display: true, text: "天數" } 
+                    },
                     y: { 
-                        title: { display: true, text: "資金水位 (元)" },
+                        // title: { display: true, text: "資金水位 (元)" },
                         ticks: {
                             callback: function(value) {
                                 return (value / 10000).toLocaleString() + "萬";
