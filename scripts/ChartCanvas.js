@@ -41,6 +41,7 @@ class ChartCanvas {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: false,
                 scales: {
                     x: { title: { display: true, text: "天數" } },
                     y: { 
