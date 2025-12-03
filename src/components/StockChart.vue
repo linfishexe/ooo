@@ -1,5 +1,5 @@
 <template>
-    <canvas ref="canvas"></canvas>
+    <canvas ref="chartCanvas"></canvas>
 </template>
 
 <script setup>
@@ -11,11 +11,11 @@ const props = defineProps({
     datasets: Array,
 });
 
-const canvas = ref(null);
+const chartCanvas = ref(null);
 let chart = null;
 
 onMounted(() => {
-    chart = new Chart(canvas.value, {
+    chart = new Chart(chartCanvas.value, {
         type: "line",
         data: {
             labels: props.labels,

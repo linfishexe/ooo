@@ -11,9 +11,9 @@
 
 <script setup>
 import { ref } from "vue";
-import { useStockStore } from "./stores/useStockStore";
-import StockList from "./components/StockList.vue";
-import StockChart from "./components/StockChart.vue";
+import { useStockStore } from "@/stores/useStockStore";
+import StockList from "@/components/StockList.vue";
+import StockChart from "@/components/StockChart.vue";
 import Papa from "papaparse";
 
 const stockStore = useStockStore();
