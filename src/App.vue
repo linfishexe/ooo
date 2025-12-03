@@ -1,12 +1,10 @@
 <template>
-    <div class="flex h-dvh w-full flex-col">
+    <div class="flex h-dvh flex-col">
         <NavBar />
-        <main class="h-full min-h-0 w-full">
+        <main class="relative flex h-full min-h-0 overflow-x-hidden">
             <section class="h-full min-h-0 w-full">
-                <div class="box-border h-[75%] w-full p-3">
-                    <StockChart />
-                </div>
-                <div class="h-[25%]"></div>
+                <StockChart class="h-[75%] p-3" />
+                <DisplayControlPanel class="h-[25%]" />
             </section>
             <SideMenu />
         </main>
@@ -17,6 +15,7 @@
 import NavBar from "@/components/NavBar.vue";
 import StockChart from "@/components/StockChart.vue";
 import SideMenu from "@/components/SideMenu.vue";
+import DisplayControlPanel from "@/components/DisplayControlPanel.vue";
 import Papa from "papaparse";
 
 function loadDefault() {
