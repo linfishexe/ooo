@@ -9,6 +9,7 @@
             <SideMenu />
         </main>
     </div>
+    <CSVLoadPanel />
 </template>
 
 <script setup>
@@ -16,15 +17,5 @@ import NavBar from "@/components/NavBar.vue";
 import StockChart from "@/components/StockChart.vue";
 import SideMenu from "@/components/SideMenu.vue";
 import DisplayControlPanel from "@/components/DisplayControlPanel.vue";
-import Papa from "papaparse";
-
-function loadDefault() {
-    fetch("https://linfishexe.github.io/ooo/20210501-20210531.csv")
-        .then((res) => res.text())
-        .then((csvText) =>
-            Papa.parse(csvText, {
-                complete: (results) => stockStore.parseCSV(results),
-            }),
-        );
-}
+import CSVLoadPanel from "@/components/CSVLoadPanel.vue";
 </script>
