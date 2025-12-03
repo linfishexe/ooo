@@ -1,5 +1,5 @@
 <template>
-    <canvas ref="chartCanvas"></canvas>
+    <canvas ref="chartCanvas" class="h-full! w-full! bg-blue-300"></canvas>
 </template>
 
 <script setup>
