@@ -1,10 +1,10 @@
 <script setup>
 import { useUiStore } from "@/stores/useUiStore";
-import { useStockStore } from "@/stores/useStockStore";
+import { useStockDataStore } from "@/stores/useStockDataStore";
 import StockListItem from "@/components/StockListItem.vue";
 
 const uiStore = useUiStore();
-const stockStore = useStockStore();
+const stockDataStore = useStockDataStore();
 </script>
 
 <template>
@@ -21,7 +21,7 @@ const stockStore = useStockStore();
             <h2 class="mb-2 text-lg font-semibold">股票列表</h2>
             <ul class="space-y-2">
                 <StockListItem
-                    v-for="stock in stockStore.stockNames"
+                    v-for="stock in stockDataStore.stockNames"
                     :key="stock.id"
                     :stock="stock"
                 />

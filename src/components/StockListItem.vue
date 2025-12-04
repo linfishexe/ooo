@@ -1,8 +1,7 @@
 <!-- src/components/StockListItem.vue -->
 <script setup>
 import { computed } from "vue";
-import { useStockStore } from "@/stores/useStockStore";
-import CheckIcon from "@/assets/checkIcon.svg";
+import { usePortfolioStore } from "@/stores/usePortfolioStore"; // 改成投資組合 store
 
 const props = defineProps({
     stock: {
@@ -11,20 +10,19 @@ const props = defineProps({
     },
 });
 
-// 取用 store 狀態
-const stockStore = useStockStore();
+const portfolioStore = usePortfolioStore();
 
 // 判斷是否 active
 const isActive = computed(() =>
-    stockStore.selectedStocks.includes(props.stock.id),
+    portfolioStore.selectedStocks.includes(props.stock.id),
 );
 
 // 切換勾選狀態
 function toggleSelect() {
     if (isActive.value) {
-        stockStore.unselectStock(props.stock.id);
+        portfolioStore.unselectStock(props.stock.id);
     } else {
-        stockStore.selectStock(props.stock.id);
+        portfolioStore.selectStock(props.stock.id);
     }
 }
 </script>

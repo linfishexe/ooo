@@ -1,12 +1,12 @@
 <script setup>
 import uploadCSV from "@/assets/uploadCSV.svg";
-import { useStockStore } from "@/stores/useStockStore"; // 匯入 Pinia store
-const stockStore = useStockStore(); // 建立 store 實例
+import { useStockDataStore } from "@/stores/useStockDataStore";
+const stocDatakStore = useStockDataStore();
 </script>
 
 <template>
     <div
-        v-if="!stockStore.isCsvLoaded"
+        v-if="!stocDatakStore.isCsvLoaded"
         class="absolute top-0 left-0 z-20 flex h-screen w-full flex-col items-center justify-center bg-white text-center"
     >
         <h2 class="text-xl font-semibold">請選擇要載入的走勢CSV</h2>
@@ -25,7 +25,7 @@ const stockStore = useStockStore(); // 建立 store 實例
                 id="loadDefaultBtn"
                 class="h-[50px] w-[150px] cursor-pointer rounded-md bg-blue-500 px-5 py-2 text-base text-white hover:bg-blue-400 active:bg-blue-600"
                 @click="
-                    stockStore.loadCsvUrl(
+                    stocDatakStore.loadCsvUrl(
                         'https://linfishexe.github.io/ooo/20210501-20210531.csv',
                     )
                 "
@@ -45,7 +45,7 @@ const stockStore = useStockStore(); // 建立 store 實例
                 id="csvFile"
                 accept=".csv"
                 class="hidden"
-                @change="(e) => stockStore.loadCsvFile(e.target.files[0])"
+                @change="(e) => stocDatakStore.loadCsvFile(e.target.files[0])"
             />
         </div>
     </div>
