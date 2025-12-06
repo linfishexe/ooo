@@ -25,7 +25,7 @@ function toggleVisibility(stockId, visible) {
 </script>
 
 <template>
-    <div class="border-t border-t-gray-400 px-4 py-3">
+    <div class="overflow-y-auto border-t border-t-gray-400 px-4 py-3">
         <h2 class="text-lg font-semibold text-blue-700">走勢顯示控制</h2>
         <div class="mt-3 flex flex-wrap content-start items-center gap-6">
             <!-- 只有一檔股票時：顯示藍線，但 label 改成股票名稱 -->
