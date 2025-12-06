@@ -1,5 +1,6 @@
 // src/stores/useStockDataStore.js
 import { defineStore } from "pinia";
+import { usePortfolioStore } from "@/stores/usePortfolioStore";
 import Papa from "papaparse";
 
 export const useStockDataStore = defineStore("stockData", {
@@ -46,6 +47,10 @@ export const useStockDataStore = defineStore("stockData", {
                     return Number.isFinite(n) ? n : null;
                 }),
             }));
+
+            // 生成顏色
+            const portfolioStore = usePortfolioStore();
+            portfolioStore.assignColors();
         },
     },
 });

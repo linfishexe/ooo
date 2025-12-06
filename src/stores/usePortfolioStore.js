@@ -7,8 +7,25 @@ export const usePortfolioStore = defineStore("portfolio", {
         stockStates: {},
         portfolioValues: [], // 平均分配資金水位
         singleValues: {}, // 每檔股票單獨投入走勢 { id: [values] }
+        stockColors: {}, // 每檔股票的顏色
     }),
     actions: {
+        assignColors() {
+            const stockDataStore = useStockDataStore();
+            const count = stockDataStore.stockNames.length;
+            const colors = this._generateDistinctColors(count);
+            stockDataStore.stockNames.forEach((stock, idx) => {
+                this.stockColors[stock.id] = colors[idx];
+            });
+        },
+        _generateDistinctColors(count) {
+            const colors = [];
+            for (let i = 0; i < count; i++) {
+                const hue = Math.floor((360 / count) * i);
+                colors.push(`hsla(${hue}, 70%, 50%, 0.6)`);
+            }
+            return colors;
+        },
         toggleStockState(id) {
             if (this.selectedStocks.includes(id)) {
                 this.selectedStocks = this.selectedStocks.filter(

@@ -1,20 +1,21 @@
+<!-- src/components/StockChart.vue -->
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import { usePortfolioStore } from "@/stores/usePortfolioStore";
 import { useStockDataStore } from "@/stores/useStockDataStore";
-import { useChart } from "@/composables/useChart";
+import { useChartStore } from "@/stores/useChartStore";
 
 const chartCanvas = ref(null);
 const portfolioStore = usePortfolioStore();
 const stockDataStore = useStockDataStore();
-const { initChart, updateChart, destroyChart } = useChart(chartCanvas);
+const chartStore = useChartStore();
 
 onMounted(() => {
-    initChart(chartCanvas.value);
+    chartStore.initChart(chartCanvas.value);
 });
 
 onBeforeUnmount(() => {
-    destroyChart();
+    chartStore.destroyChart();
 });
 
 watch(
@@ -39,13 +40,13 @@ watch(
             datasets.push({
                 label: stockName,
                 data: [...singleData],
-                borderColor: `rgba(200, 100, 100, 0.5)`,
+                borderColor: portfolioStore.stockColors[id],
                 borderWidth: 1,
                 fill: false,
             });
         });
 
-        updateChart(labels, datasets);
+        chartStore.updateChart(labels, datasets);
     },
 );
 </script>
