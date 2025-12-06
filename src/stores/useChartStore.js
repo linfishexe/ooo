@@ -17,6 +17,7 @@ export const useChartStore = defineStore("chart", {
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: false,
                         scales: {
                             y: {
                                 ticks: {

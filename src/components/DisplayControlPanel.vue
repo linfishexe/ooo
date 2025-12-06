@@ -28,17 +28,34 @@ function toggleVisibility(stockId, visible) {
     <div class="border-t border-t-gray-400 px-4 py-3">
         <h2 class="text-lg font-semibold text-blue-700">走勢顯示控制</h2>
         <div class="mt-3 flex flex-wrap content-start items-center gap-6">
-            <!-- 平均分配資金水位的控制：只有在有選股票時才顯示 -->
-            <ToggleSwitch
-                v-if="selectedStocks.length > 0"
-                label="均分"
-                :model-value="stockVisibility['avg'] ?? true"
-                color="#2b5fce"
-                @update:modelValue="(val) => toggleVisibility('avg', val)"
-            />
+            <!-- 只有一檔股票時：顯示藍線，但 label 改成股票名稱 -->
+            <!-- 單檔股票時 -->
+            <div class="w-full" v-if="selectedStocks.length === 1">
+                <ToggleSwitch
+                    :label="
+                        stockDataStore.stockNames[selectedStocks[0]]?.name ||
+                        '?'
+                    "
+                    :model-value="stockVisibility[selectedStocks[0]] ?? true"
+                    color="#2b5fce"
+                    @update:modelValue="
+                        (val) => toggleVisibility(selectedStocks[0], val)
+                    "
+                />
+            </div>
 
-            <!-- 單檔股票的控制 -->
+            <!-- 多檔股票時：顯示均分 + 各股票 -->
+            <div class="w-full" v-else-if="selectedStocks.length > 1">
+                <ToggleSwitch
+                    label="均分"
+                    :model-value="stockVisibility['avg'] ?? true"
+                    color="#2b5fce"
+                    @update:modelValue="(val) => toggleVisibility('avg', val)"
+                />
+            </div>
+
             <ToggleSwitch
+                v-if="selectedStocks.length > 1"
                 v-for="id in selectedStocks"
                 :key="id"
                 :label="stockDataStore.stockNames[id]?.name || '?'"
