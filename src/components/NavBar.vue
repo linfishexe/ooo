@@ -1,7 +1,10 @@
 <template>
-    <!-- nav只在 md 以下顯示 -->
     <nav
-        class="flex w-full justify-end border-b border-b-gray-400 bg-white px-5 py-3 md:hidden"
+        :class="[
+            'flex w-full justify-end px-5 py-3',
+            'border-b border-b-gray-400 bg-white',
+            'md:hidden', // nav只在 md 以下顯示
+        ]"
     >
         <SideMenuButton />
     </nav>

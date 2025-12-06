@@ -28,7 +28,7 @@ watch(
                 label: "平均分配資金水位",
                 data: values,
                 borderColor: "#2b5fce",
-                borderWidth: 2,
+                borderWidth: 3,
                 fill: false,
             },
         ];
@@ -39,7 +39,7 @@ watch(
             datasets.push({
                 label: stockName,
                 data: [...singleData],
-                borderColor: `rgba(200, 100, 100, 0.3)`,
+                borderColor: `rgba(200, 100, 100, 0.5)`,
                 borderWidth: 1,
                 fill: false,
             });

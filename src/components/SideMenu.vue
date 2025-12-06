@@ -2,7 +2,6 @@
 import { useUiStore } from "@/stores/useUiStore";
 import { useStockDataStore } from "@/stores/useStockDataStore";
 import StockListItem from "@/components/StockListItem.vue";
-
 const uiStore = useUiStore();
 const stockDataStore = useStockDataStore();
 </script>

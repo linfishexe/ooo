@@ -1,7 +1,7 @@
 <!-- src/components/StockListItem.vue -->
 <script setup>
 import { computed } from "vue";
-import { usePortfolioStore } from "@/stores/usePortfolioStore"; // 改成投資組合 store
+import { usePortfolioStore } from "@/stores/usePortfolioStore";
 
 const props = defineProps({
     stock: {
@@ -19,11 +19,7 @@ const isActive = computed(() =>
 
 // 切換勾選狀態
 function toggleSelect() {
-    if (isActive.value) {
-        portfolioStore.unselectStock(props.stock.id);
-    } else {
-        portfolioStore.selectStock(props.stock.id);
-    }
+    portfolioStore.toggleStockState(props.stock.id);
 }
 </script>
 

@@ -10,28 +10,21 @@ const uiStore = useUiStore();
     >
         <span
             :class="[
-                'hamburger-line',
+                'absolute h-0.5 w-6 origin-center rounded bg-gray-700 transition-all duration-200',
                 uiStore.isSideMenuOpen ? 'rotate-45' : '-translate-y-2',
             ]"
         ></span>
         <span
             :class="[
-                'hamburger-line',
+                'absolute h-0.5 w-6 origin-center rounded bg-gray-700 transition-all duration-200',
                 uiStore.isSideMenuOpen ? 'opacity-0' : '',
             ]"
         ></span>
         <span
             :class="[
-                'hamburger-line',
+                'absolute h-0.5 w-6 origin-center rounded bg-gray-700 transition-all duration-200',
                 uiStore.isSideMenuOpen ? '-rotate-45' : 'translate-y-2',
             ]"
         ></span>
     </button>
 </template>
-
-<style scoped>
-@reference "tailwindcss";
-.hamburger-line {
-    @apply absolute h-0.5 w-6 origin-center rounded bg-gray-700 transition-all duration-200;
-}
-</style>

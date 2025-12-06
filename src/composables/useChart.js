@@ -42,5 +42,9 @@ export function useChart() {
         }
     }
 
-    return { initChart, updateChart, destroyChart };
+    function getChartInstance() {
+        return toRaw(chartInstance);
+    }
+
+    return { initChart, updateChart, destroyChart, getChartInstance };
 }

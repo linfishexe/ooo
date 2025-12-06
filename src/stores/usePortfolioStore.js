@@ -9,23 +9,18 @@ export const usePortfolioStore = defineStore("portfolio", {
         singleValues: {}, // 每檔股票單獨投入走勢 { id: [values] }
     }),
     actions: {
-        selectStock(id) {
-            if (!this.selectedStocks.includes(id)) {
-                this.selectedStocks.push(id);
-                this.stockStates[id] = true;
-            }
-            this.calcPortfolioValues();
-        },
-        unselectStock(id) {
-            this.selectedStocks = this.selectedStocks.filter((s) => s !== id);
-            delete this.stockStates[id];
-            this.calcPortfolioValues();
-        },
         toggleStockState(id) {
-            if (this.stockStates[id] !== undefined) {
-                this.stockStates[id] = !this.stockStates[id];
+            if (this.selectedStocks.includes(id)) {
+                this.selectedStocks = this.selectedStocks.filter(
+                    (s) => s !== id,
+                );
+            } else {
+                this.selectedStocks.push(id);
             }
+            this.calcPortfolioValues();
         },
+
+        // 主方法：調度
         calcPortfolioValues(initialCapital = 10000000) {
             const stockDataStore = useStockDataStore();
             if (this.selectedStocks.length === 0) {
@@ -34,48 +29,62 @@ export const usePortfolioStore = defineStore("portfolio", {
                 return;
             }
 
-            // 平均分配計算
+            const holdings = this._calcHoldings(stockDataStore, initialCapital);
+            this.portfolioValues = this._calcPortfolioTrend(
+                stockDataStore,
+                holdings,
+                initialCapital,
+            );
+            this.singleValues = this._calcSingleTrends(
+                stockDataStore,
+                initialCapital,
+            );
+        },
+
+        // 計算持股分配
+        _calcHoldings(stockDataStore, initialCapital) {
             const capitalPerStock = Math.floor(
                 initialCapital / this.selectedStocks.length,
             );
             let remain =
                 initialCapital - capitalPerStock * this.selectedStocks.length;
 
-            const holdings = this.selectedStocks.map((id) => {
+            return this.selectedStocks.map((id) => {
                 const firstPrice = stockDataStore.stockDataRows[id].data[0];
                 const shares = Math.floor(capitalPerStock / firstPrice);
                 const usedCash = shares * firstPrice;
                 remain += capitalPerStock - usedCash;
-                return { id, shares };
+                return { id, shares, remain };
             });
+        },
 
+        // 計算整體走勢
+        _calcPortfolioTrend(stockDataStore, holdings, initialCapital) {
             const days = stockDataStore.stockDataRows[0].data.length;
-            this.portfolioValues = Array.from(
-                { length: days },
-                (_, dayIndex) => {
-                    let value = remain;
-                    holdings.forEach((h) => {
-                        const price =
-                            stockDataStore.stockDataRows[h.id].data[dayIndex];
-                        if (!isNaN(price)) value += h.shares * price;
-                    });
-                    return Math.round(value);
-                },
-            );
+            return Array.from({ length: days }, (_, dayIndex) => {
+                let value = holdings[0].remain; // 初始剩餘資金
+                holdings.forEach((h) => {
+                    const price =
+                        stockDataStore.stockDataRows[h.id].data[dayIndex];
+                    if (!isNaN(price)) value += h.shares * price;
+                });
+                return Math.round(value);
+            });
+        },
 
-            // 單一股票投入計算
-            this.singleValues = {};
+        // 計算單一股票走勢
+        _calcSingleTrends(stockDataStore, initialCapital) {
+            const result = {};
             this.selectedStocks.forEach((id) => {
                 const firstPrice = stockDataStore.stockDataRows[id].data[0];
                 const shares = Math.floor(initialCapital / firstPrice);
                 const remainSingle = initialCapital - shares * firstPrice;
 
-                this.singleValues[id] = stockDataStore.stockDataRows[
-                    id
-                ].data.map((price) =>
-                    Math.round(remainSingle + shares * price),
+                result[id] = stockDataStore.stockDataRows[id].data.map(
+                    (price) => Math.round(remainSingle + shares * price),
                 );
             });
+            return result;
         },
     },
 });
