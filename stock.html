@@ -8,6 +8,7 @@
     <script src="./scripts/ChartCanvas.js"></script>
     <script src="./scripts/StockDataProcessor.js"></script>
     <script src="./scripts/StockListUI.js"></script>
+    <script src="./scripts/calc_shap.js"></script>
     <link rel="stylesheet" href="styles/style.css">
     <title>股價 csv 讀取</title>
 </head>
@@ -34,7 +35,7 @@
     <main>
         <section>
             <div id="shap_ratio">
-                <p>SHAP Ratio : </p>
+                <p>SHAP Ratio : <span id="display_sharpe">-</span></p>
             </div>
             <div id="chartsContainer"></div>
             <!-- 圖表容器 -->
@@ -58,11 +59,11 @@
         </aside>
     </main>
 <script>
-function toggleAside(button) {
-    const aside = document.querySelector("aside");
-    button.classList.toggle("open");
-    aside.classList.toggle("open");
-}
+    function toggleAside(button) {
+        const aside = document.querySelector("aside");
+        button.classList.toggle("open");
+        aside.classList.toggle("open");
+    }
 </script>
 <script>
 
@@ -156,6 +157,8 @@ function showChartsByIndices(indices) {
             const holdingListSingle = holdingsSingle.holdingList;
             const valuesSingle = stockDataProcessor.calcValues(holdingListSingle, remainSingle);
 
+            update_shap(portfolioValues);
+
             const label = stockDataProcessor.stockNames[stockIndex];
             const color = getColor(idx);
             datasets.push({
@@ -197,6 +200,35 @@ function getColor(i) {
     return colors[i % colors.length];
 }
 
+function update_shap(dailyValues) {
+    
+    // 1. 計算夏普值 (假設無風險利率 1% -> 0.01)
+    // 因為在 head 引入了 js，這裡可以直接使用 SharpeCalculator
+    const sharpeVal = SharpeCalculator.calculate(dailyValues, 0.01); 
+
+    // 2. 抓取 HTML 元素
+    const spanEl = document.getElementById('display_sharpe');
+
+    if (spanEl) {
+        // 更新數值
+        spanEl.innerText = sharpeVal.toFixed(4);
+
+        // 顏色判斷
+        if (sharpeVal >= 1.5) {
+            spanEl.style.color = '#ff0000'; // 亮紅
+            spanEl.style.fontWeight = 'bold';
+        } else if (sharpeVal >= 1.0) {
+            spanEl.style.color = '#ce0000'; // 暗紅
+            spanEl.style.fontWeight = 'normal';
+        } else if (sharpeVal < 0) {
+            spanEl.style.color = 'green';   // 綠色
+            spanEl.style.fontWeight = 'normal';
+        } else {
+            spanEl.style.color = 'black';   // 黑色
+            spanEl.style.fontWeight = 'normal';
+        }
+    }
+}
 </script>
 </body>
 </html>

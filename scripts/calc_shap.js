@@ -1,8 +1,3 @@
-/**
- * calc_shap.js
- * 計算夏普值 (Sharpe Ratio)
- */
-
 class SharpeCalculator {
     /**
      * @param {number[]} values - 每日資金水位的陣列 (由 calcValues 產出)
@@ -58,5 +53,3 @@ class SharpeCalculator {
         return parseFloat(annualizedSharpe.toFixed(4)); // 回傳保留4位小數
     }
 }
-
-module.exports = SharpeCalculator;
