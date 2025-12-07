@@ -1,5 +1,5 @@
 <template>
-    <div class="flex h-dvh flex-col">
+    <div class="flex h-dvh min-w-[300px] flex-col">
         <NavBar />
         <main class="relative flex h-full min-h-0 overflow-x-hidden">
             <section class="h-full min-h-0 w-full">

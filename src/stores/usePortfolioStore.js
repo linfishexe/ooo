@@ -37,7 +37,7 @@ export const usePortfolioStore = defineStore("portfolio", {
             this.calcPortfolioValues();
         },
 
-        // 主方法：調度
+        // 計算持股的資金水位走勢
         calcPortfolioValues(initialCapital = 10000000) {
             const stockDataStore = useStockDataStore();
             if (this.selectedStocks.length === 0) {
@@ -102,6 +102,39 @@ export const usePortfolioStore = defineStore("portfolio", {
                 );
             });
             return result;
+        },
+
+        // 計算夏普比率
+        calcSharpeRatio(riskFreeRate = 0) {
+            if (!this.portfolioValues || this.portfolioValues.length < 2)
+                return null;
+
+            // 計算每日報酬率
+            const returns = [];
+            for (let i = 1; i < this.portfolioValues.length; i++) {
+                const prev = this.portfolioValues[i - 1];
+                const curr = this.portfolioValues[i];
+                if (prev > 0) {
+                    returns.push((curr - prev) / prev);
+                }
+            }
+
+            if (returns.length === 0) return null;
+
+            // 平均報酬率
+            const avgReturn =
+                returns.reduce((sum, r) => sum + r, 0) / returns.length;
+
+            // 標準差
+            const variance =
+                returns.reduce(
+                    (sum, r) => sum + Math.pow(r - avgReturn, 2),
+                    0,
+                ) / returns.length;
+            const stdDev = Math.sqrt(variance);
+
+            // Sharpe Ratio
+            return stdDev === 0 ? null : (avgReturn - riskFreeRate) / stdDev;
         },
     },
 });

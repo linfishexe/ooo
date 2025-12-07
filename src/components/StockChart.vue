@@ -36,10 +36,10 @@ watch(
                 borderWidth: 4,
                 fill: false,
             });
-        } else {
+        } else if (portfolioStore.selectedStocks.length > 1) {
             // 多檔股票 → 顯示藍線 + 各股票線
             datasets.push({
-                label: "平均分配資金水位",
+                label: "平均分配",
                 data: values,
                 borderColor: "#2b5fce",
                 borderWidth: 4,

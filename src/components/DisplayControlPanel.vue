@@ -4,6 +4,7 @@ import { usePortfolioStore } from "@/stores/usePortfolioStore";
 import { useStockDataStore } from "@/stores/useStockDataStore";
 import { useChartStore } from "@/stores/useChartStore";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
+import SHAPCalculator from "@/components/SHAPCalculator.vue";
 
 const portfolioStore = usePortfolioStore();
 const stockDataStore = useStockDataStore();
@@ -15,7 +16,7 @@ const stockVisibility = ref({});
 function toggleVisibility(stockId, visible) {
     let datasetLabel;
     if (stockId === "avg") {
-        datasetLabel = "平均分配資金水位";
+        datasetLabel = "平均分配";
     } else {
         datasetLabel = stockDataStore.stockNames[stockId]?.name || "?";
     }
@@ -25,10 +26,10 @@ function toggleVisibility(stockId, visible) {
 </script>
 
 <template>
-    <div class="overflow-y-auto border-t border-t-gray-400 px-4 py-3">
-        <h2 class="text-lg font-semibold text-blue-700">走勢顯示控制</h2>
+    <div class="relative overflow-y-auto border-t border-t-gray-400 px-4 py-3">
+        <h2 class="text-lg font-semibold">走勢顯示控制</h2>
+        <SHAPCalculator class="absolute top-0 right-0 w-[120px]" />
         <div class="mt-3 flex flex-wrap content-start items-center gap-6">
-            <!-- 只有一檔股票時：顯示藍線，但 label 改成股票名稱 -->
             <!-- 單檔股票時 -->
             <div class="w-full" v-if="selectedStocks.length === 1">
                 <ToggleSwitch
