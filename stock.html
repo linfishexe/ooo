@@ -196,7 +196,15 @@ function bindSwitchToDataset(switchBox, datasetLabel) {
 }
 
 function getColor(i) {
-    const colors = ["#a99391", "#bc9683","#c49d62", "#8ea98e", "#787e82", "#6a5f7d", "#71494a"];
+    const colors = [
+        "rgba(169, 147, 145, .4)", 
+        "#bc9683",
+        "#c49d62", 
+        "#8ea98e", 
+        "#787e82", 
+        "#6a5f7d", 
+        "#71494a"
+    ];
     return colors[i % colors.length];
 }
 
@@ -204,7 +212,7 @@ function update_shap(dailyValues) {
     
     // 1. 計算夏普值 (假設無風險利率 1% -> 0.01)
     // 因為在 head 引入了 js，這裡可以直接使用 SharpeCalculator
-    const sharpeVal = SharpeCalculator.calculate(dailyValues, 0.01); 
+    const sharpeVal = SharpeCalculator.calculate(dailyValues, 0); 
 
     // 2. 抓取 HTML 元素
     const spanEl = document.getElementById('display_sharpe');

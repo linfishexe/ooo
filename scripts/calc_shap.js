@@ -33,23 +33,13 @@ class SharpeCalculator {
         // 3. 計算每日報酬的標準差 (Standard Deviation)
         // 公式: sqrt( sum((x - mean)^2) / (N - 1) )  -> 使用樣本標準差
         const squaredDiffs = dailyReturns.map(val => Math.pow(val - avgDailyReturn, 2));
-        const avgSquaredDiff = squaredDiffs.reduce((acc, val) => acc + val, 0) / (dailyReturns.length - 1);
+        const avgSquaredDiff = squaredDiffs.reduce((acc, val) => acc + val, 0) / dailyReturns.length;
         const dailyStdDev = Math.sqrt(avgSquaredDiff);
 
         // 如果波動率為 0 (例如完全沒交易，資金平躺)，夏普值無法計算 (分母為0)
         if (dailyStdDev === 0) return 0;
 
-        // 4. 將無風險利率轉為日利率
-        // 假設一年 252 個交易日
-        const dailyRiskFree = riskFreeRate / 252;
-
-        // 5. 計算日夏普值 (Daily Sharpe)
-        const dailySharpe = (avgDailyReturn - dailyRiskFree) / dailyStdDev;
-
-        // 6. 計算年化夏普值 (Annualized Sharpe)
-        // 日夏普值 * sqrt(252)
-        const annualizedSharpe = dailySharpe * Math.sqrt(252);
-
-        return parseFloat(annualizedSharpe.toFixed(4)); // 回傳保留4位小數
+        // (資金水位平均 - 無風險) / 資金水位標準差 = SHAP Ratio
+        return (avgDailyReturn - riskFreeRate) / dailyStdDev
     }
 }
