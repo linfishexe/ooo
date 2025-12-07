@@ -1,3 +1,4 @@
+<!-- src/components/SideMenuButton.vue -->
 <script setup>
 import { useUiStore } from "@/stores/useUiStore";
 const uiStore = useUiStore();

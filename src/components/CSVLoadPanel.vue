@@ -1,3 +1,4 @@
+<!-- src/components/CSVLoadPanel.vue -->
 <script setup>
 import uploadCSV from "@/assets/uploadCSV.svg";
 import { useStockDataStore } from "@/stores/useStockDataStore";

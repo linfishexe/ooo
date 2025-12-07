@@ -65,7 +65,7 @@ watch(
 </script>
 
 <template>
-    <div>
+    <div class="p-3">
         <canvas ref="chartCanvas" class="h-full! w-full!"></canvas>
     </div>
 </template>

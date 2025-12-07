@@ -1,10 +1,10 @@
+<!-- src/components/DisplayControlPanel.vue -->
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { usePortfolioStore } from "@/stores/usePortfolioStore";
 import { useStockDataStore } from "@/stores/useStockDataStore";
 import { useChartStore } from "@/stores/useChartStore";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
-import SHAPCalculator from "@/components/SHAPCalculator.vue";
 
 const portfolioStore = usePortfolioStore();
 const stockDataStore = useStockDataStore();
@@ -23,12 +23,25 @@ function toggleVisibility(stockId, visible) {
     chartStore.visibilityMap[datasetLabel] = visible;
     chartStore.setDatasetVisibility(datasetLabel, visible);
 }
+
+watch(selectedStocks, (newVal) => {
+    if (newVal.length === 1) {
+        const id = newVal[0];
+        const stockName = stockDataStore.stockNames[id]?.name || "?";
+        const visible = chartStore.visibilityMap[stockName] ?? true;
+        stockVisibility.value[id] = visible;
+        delete stockVisibility.value["avg"];
+    } else if (newVal.length > 1) {
+        const visible = chartStore.visibilityMap["平均分配"] ?? true;
+        stockVisibility.value["avg"] = visible;
+    }
+});
 </script>
 
 <template>
     <div class="relative overflow-y-auto border-t border-t-gray-400 px-4 py-3">
         <h2 class="text-lg font-semibold">走勢顯示控制</h2>
-        <SHAPCalculator class="absolute top-0 right-0 w-[120px]" />
+        <slot></slot>
         <div class="mt-3 flex flex-wrap content-start items-center gap-6">
             <!-- 單檔股票時 -->
             <div class="w-full" v-if="selectedStocks.length === 1">

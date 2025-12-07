@@ -1,3 +1,4 @@
+<!-- src/components/NavBar.vue -->
 <template>
     <nav
         :class="[
@@ -6,10 +7,6 @@
             'md:hidden', // nav只在 md 以下顯示
         ]"
     >
-        <SideMenuButton />
+        <slot></slot>
     </nav>
 </template>
-
-<script setup>
-import SideMenuButton from "@/components/SideMenuButton.vue";
-</script>

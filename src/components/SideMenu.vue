@@ -1,3 +1,4 @@
+<!-- src/components/SideMenu.vue -->
 <script setup>
 import { useUiStore } from "@/stores/useUiStore";
 import { useStockDataStore } from "@/stores/useStockDataStore";
