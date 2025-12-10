@@ -21,7 +21,7 @@ const stockDataStore = useStockDataStore();
             <h2 class="mb-2 text-lg font-semibold">股票列表</h2>
             <ul class="space-y-2">
                 <StockListItem
-                    v-for="stock in stockDataStore.stockNames"
+                    v-for="stock in stockDataStore.stocks"
                     :key="stock.id"
                     :stock="stock"
                 />

@@ -1,35 +1,22 @@
-// src/stores/useStockDataStore.js
 import { defineStore } from "pinia";
-import { usePortfolioStore } from "@/stores/usePortfolioStore";
 import Papa from "papaparse";
 
 export const useStockDataStore = defineStore("stockData", {
     state: () => ({
-        stockNames: [],
-        stockDataRows: [],
+        stocks: [], // 結構: { id, name, data: [], color: '' }
         isCsvLoaded: false,
     }),
     actions: {
         async loadCsvFile(file) {
-            return new Promise((resolve, reject) => {
-                Papa.parse(file, {
-                    complete: (results) => {
-                        this._processCsv(results.data);
-                        this.isCsvLoaded = true;
-                        resolve();
-                    },
-                    error: (err) => reject(err),
-                });
+            Papa.parse(file, {
+                complete: (results) => this._processCsv(results.data),
             });
         },
         async loadCsvUrl(url) {
             const response = await fetch(url);
             const csvText = await response.text();
             Papa.parse(csvText, {
-                complete: (results) => {
-                    this._processCsv(results.data);
-                    this.isCsvLoaded = true;
-                },
+                complete: (results) => this._processCsv(results.data),
             });
         },
         _processCsv(rows) {
@@ -38,19 +25,20 @@ export const useStockDataStore = defineStore("stockData", {
             );
             const header = cleanRows[0];
             const body = cleanRows.slice(1);
+            const count = header.length;
 
-            this.stockNames = header.map((name, i) => ({ id: i, name }));
-            this.stockDataRows = header.map((_, colIndex) => ({
+            this.stocks = header.map((name, colIndex) => ({
                 id: colIndex,
+                name,
                 data: body.map((row) => {
                     const n = Number(row[colIndex]);
                     return Number.isFinite(n) ? n : null;
                 }),
+                // 直接在此產生顏色，簡單明瞭
+                color: `hsla(${Math.floor((360 / count) * colIndex)}, 70%, 50%, 0.6)`,
             }));
 
-            // 生成顏色
-            const portfolioStore = usePortfolioStore();
-            portfolioStore.assignColors();
+            this.isCsvLoaded = true;
         },
     },
 });

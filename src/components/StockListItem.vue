@@ -14,12 +14,12 @@ const portfolioStore = usePortfolioStore();
 
 // 判斷是否 active
 const isActive = computed(() =>
-    portfolioStore.selectedStocks.includes(props.stock.id),
+    portfolioStore.selectedStockIds.includes(props.stock.id),
 );
 
 // 切換勾選狀態
 function toggleSelect() {
-    portfolioStore.toggleStockState(props.stock.id);
+    portfolioStore.toggleStock(props.stock.id);
 }
 </script>
 

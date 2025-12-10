@@ -1,139 +1,96 @@
 // src/stores/usePortfolioStore.js
 import { defineStore } from "pinia";
 import { useStockDataStore } from "@/stores/useStockDataStore";
+
 export const usePortfolioStore = defineStore("portfolio", {
     state: () => ({
-        selectedStocks: [],
-        stockStates: {},
-        portfolioValues: [], // 平均分配資金水位
-        singleValues: {}, // 每檔股票單獨投入走勢 { id: [values] }
-        stockColors: {}, // 每檔股票的顏色
+        selectedStockIds: [], // 改名 id 比較明確
+        portfolioValues: [], // 綜合走勢
+        singleValues: {}, // 個股模擬走勢 { id: [] }
     }),
     actions: {
-        assignColors() {
-            const stockDataStore = useStockDataStore();
-            const count = stockDataStore.stockNames.length;
-            const colors = this._generateDistinctColors(count);
-            stockDataStore.stockNames.forEach((stock, idx) => {
-                this.stockColors[stock.id] = colors[idx];
-            });
-        },
-        _generateDistinctColors(count) {
-            const colors = [];
-            for (let i = 0; i < count; i++) {
-                const hue = Math.floor((360 / count) * i);
-                colors.push(`hsla(${hue}, 70%, 50%, 0.6)`);
-            }
-            return colors;
-        },
-        toggleStockState(id) {
-            if (this.selectedStocks.includes(id)) {
-                this.selectedStocks = this.selectedStocks.filter(
+        toggleStock(id) {
+            if (this.selectedStockIds.includes(id)) {
+                this.selectedStockIds = this.selectedStockIds.filter(
                     (s) => s !== id,
                 );
             } else {
-                this.selectedStocks.push(id);
+                this.selectedStockIds.push(id);
             }
             this.calcPortfolioValues();
         },
 
-        // 計算持股的資金水位走勢
         calcPortfolioValues(initialCapital = 10000000) {
-            const stockDataStore = useStockDataStore();
-            if (this.selectedStocks.length === 0) {
+            const stockStore = useStockDataStore();
+            if (this.selectedStockIds.length === 0) {
                 this.portfolioValues = [];
                 this.singleValues = {};
                 return;
             }
 
-            const holdings = this._calcHoldings(stockDataStore, initialCapital);
-            this.portfolioValues = this._calcPortfolioTrend(
-                stockDataStore,
-                holdings,
-                initialCapital,
-            );
-            this.singleValues = this._calcSingleTrends(
-                stockDataStore,
-                initialCapital,
-            );
-        },
-
-        // 計算持股分配
-        _calcHoldings(stockDataStore, initialCapital) {
+            // 1. 計算每檔分配金額
             const capitalPerStock = Math.floor(
-                initialCapital / this.selectedStocks.length,
+                initialCapital / this.selectedStockIds.length,
             );
-            let remain =
-                initialCapital - capitalPerStock * this.selectedStocks.length;
 
-            return this.selectedStocks.map((id) => {
-                const firstPrice = stockDataStore.stockDataRows[id].data[0];
+            // 2. 計算個股持倉 (Shares & Remain)
+            const holdings = this.selectedStockIds.map((id) => {
+                const stock = stockStore.stocks[id];
+                const firstPrice = stock.data[0];
                 const shares = Math.floor(capitalPerStock / firstPrice);
-                const usedCash = shares * firstPrice;
-                remain += capitalPerStock - usedCash;
-                return { id, shares, remain };
+                const remain = capitalPerStock - shares * firstPrice;
+                return { id, shares, remain, data: stock.data };
             });
-        },
 
-        // 計算整體走勢
-        _calcPortfolioTrend(stockDataStore, holdings, initialCapital) {
-            const days = stockDataStore.stockDataRows[0].data.length;
-            return Array.from({ length: days }, (_, dayIndex) => {
-                let value = holdings[0].remain; // 初始剩餘資金
-                holdings.forEach((h) => {
-                    const price =
-                        stockDataStore.stockDataRows[h.id].data[dayIndex];
-                    if (!isNaN(price)) value += h.shares * price;
-                });
-                return Math.round(value);
+            // 修正餘額誤差 (加回第一檔)
+            const totalAllocated = holdings.reduce(
+                (sum, h) => sum + h.shares * h.data[0] + h.remain,
+                0,
+            );
+            holdings[0].remain += initialCapital - totalAllocated;
+
+            // 3. 計算每日資產總值 (Portfolio Trend)
+            const days = holdings[0].data.length;
+            this.portfolioValues = Array.from({ length: days }, (_, i) => {
+                return holdings.reduce((sum, h) => {
+                    const price = h.data[i];
+                    return (
+                        sum + h.remain + (isNaN(price) ? 0 : h.shares * price)
+                    );
+                }, 0);
             });
-        },
 
-        // 計算單一股票走勢
-        _calcSingleTrends(stockDataStore, initialCapital) {
-            const result = {};
-            this.selectedStocks.forEach((id) => {
-                const firstPrice = stockDataStore.stockDataRows[id].data[0];
+            // 4. 計算單一股票全押走勢 (用於圖表比較)
+            this.singleValues = {};
+            this.selectedStockIds.forEach((id) => {
+                const stock = stockStore.stocks[id];
+                const firstPrice = stock.data[0];
                 const shares = Math.floor(initialCapital / firstPrice);
-                const remainSingle = initialCapital - shares * firstPrice;
-
-                result[id] = stockDataStore.stockDataRows[id].data.map(
-                    (price) => Math.round(remainSingle + shares * price),
+                const remain = initialCapital - shares * firstPrice;
+                this.singleValues[id] = stock.data.map(
+                    (price) => remain + shares * price,
                 );
             });
-            return result;
         },
 
-        // 計算夏普比率
         calcSharpeRatio(riskFreeRate = 0) {
             if (!this.portfolioValues || this.portfolioValues.length < 2)
                 return null;
-
-            // 計算每日報酬率
             const returns = [];
             for (let i = 1; i < this.portfolioValues.length; i++) {
                 const prev = this.portfolioValues[i - 1];
                 const curr = this.portfolioValues[i];
-                if (prev > 0) {
-                    returns.push((curr - prev) / prev);
-                }
+                if (prev > 0) returns.push((curr - prev) / prev);
             }
-
             if (returns.length === 0) return null;
-
-            // 平均報酬率
             const avgReturn =
                 returns.reduce((sum, r) => sum + r, 0) / returns.length;
-
-            // 標準差
             const variance =
                 returns.reduce(
                     (sum, r) => sum + Math.pow(r - avgReturn, 2),
                     0,
                 ) / returns.length;
             const stdDev = Math.sqrt(variance);
-
-            // Sharpe Ratio
             return stdDev === 0 ? null : (avgReturn - riskFreeRate) / stdDev;
         },
     },
